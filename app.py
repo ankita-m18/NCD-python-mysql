@@ -43,6 +43,7 @@ def register():
         total=0
         screening=""
         msg = " "
+        patient_id=""
 
         firstname=request.form['firstname']
         lastname=request.form['lastname']
@@ -51,15 +52,17 @@ def register():
         phone=request.form['phone']
         birthday=request.form['birthday']
         pincode=request.form['pincode']
+
+    making_global(aadhaar)
     
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     cursor.execute('INSERT INTO patient VALUES (NULL, % s, % s, % s, % s, % s, % s, % s,%s,%s)',(firstname, lastname, gender , aadhaar, phone, birthday, pincode, total, screening,))
     mysql.connection.commit()
     msg='You have successfully registered !'
+    cursor.execute('SELECT patient_id from patient WHERE aadhaar_uid=%s',[aadhaar])
+    patient_id= cursor.fetchone()
 
-    making_global(aadhaar)
-
-    return render_template('question.html')
+    return render_template('question.html',patient_id=patient_id.get('patient_id'))
 
 @app.route('/submit', methods=['GET','POST'])
 def ncd_rac():
@@ -110,6 +113,7 @@ def ncd_rac():
 
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     cursor.execute('UPDATE patient SET score =% s,screening =% s WHERE aadhaar_uid =% s',(total,screening,aadhaar))
+
     mysql.connection.commit()   
 
     return render_template('result.html',result=res,total=total, age=age,smoke=smoke,alcohol=alcohol,
