@@ -7,6 +7,9 @@ import MySQLdb.cursors
 import sys
 print(sys.path)
 
+from random import randint
+  
+
 app = Flask(__name__)
 
 #mysql
@@ -54,15 +57,38 @@ def register():
         pincode=request.form['pincode']
 
     making_global(aadhaar)
-    
+
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute('INSERT INTO patient VALUES (NULL, % s, % s, % s, % s, % s, % s, % s,%s,%s)',(firstname, lastname, gender , aadhaar, phone, birthday, pincode, total, screening,))
-    mysql.connection.commit()
-    msg='You have successfully registered !'
+    cursor.execute('SELECT patient_id from patient')
+    pid=cursor.fetchall()
+    #print(pid)
+    
+    if(len(pid)>0):
+        for i in pid:
+            id=random_n_digits(14)
+            if(id!=i):
+                cursor.execute('INSERT INTO patient VALUES (%s, % s, % s, % s, % s, % s, % s, % s,%s,%s)',(id,firstname, lastname, gender , aadhaar, phone, birthday, pincode, total, screening,))
+                mysql.connection.commit()
+                msg='You have successfully registered !'
+                break
+            else:
+                continue
+                
+    else:
+        id=random_n_digits(14)
+        cursor.execute('INSERT INTO patient VALUES (%s,% s, % s, % s, % s, % s, % s, % s,%s,%s)',(id,firstname, lastname, gender , aadhaar, phone, birthday, pincode, total, screening))
+        mysql.connection.commit()
+    
     cursor.execute('SELECT patient_id from patient WHERE aadhaar_uid=%s',[aadhaar])
     patient_id= cursor.fetchone()
 
     return render_template('question.html',patient_id=patient_id.get('patient_id'))
+
+def random_n_digits(n):
+    range_start = 10**(n-1)
+    range_end = (10**n)-1
+    return randint(range_start, range_end)
+    
 
 @app.route('/submit', methods=['GET','POST'])
 def ncd_rac():
